@@ -210,3 +210,56 @@ button {
   0% { transform: translateX(-120%); }
   100% { transform: translateX(360%); }
 }
+
+/* Видимый отказ загрузки: сеть/блокировщик/таймаут/крэш. Скрыт по умолчанию,
+   показывается через #loader.has-error (main.js). Заменяет собой прогресс-бар,
+   чтобы не оставлять сайт молча зависшим на 0% или тихо пустым без модели. */
+.loader-error {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: min(420px, 84vw);
+  text-align: center;
+}
+
+#loader.has-error .loader-inner {
+  display: none;
+}
+
+#loader.has-error .loader-error {
+  display: flex;
+}
+
+.loader-error-title {
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  color: var(--white);
+}
+
+.loader-error-text {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--gray);
+}
+
+.loader-error-retry {
+  margin-top: 4px;
+  padding: 12px 26px;
+  border: 1px solid var(--accent-soft);
+  border-radius: 100px;
+  background: rgba(103, 213, 255, 0.07);
+  color: var(--white);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  transition: background 0.3s var(--ease), border-color 0.3s var(--ease), color 0.3s var(--ease);
+}
+
+.loader-error-retry:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--black);
+}

@@ -45,6 +45,35 @@ const el = (id) => document.getElementById(id);
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const isMobile = window.matchMedia("(max-width: 768px)").matches;
 
+// --- Видимый отказ загрузки ---
+// Раньше сбой сети/загрузки тихо «глотался» в .catch(), и сайт молча уезжал в
+// интро БЕЗ ровера (пустая сцена с текстом) либо просто зависал на 0% — ни то,
+// ни другое не даёт ни малейшей зацепки, что пошло не так. Теперь любой
+// фатальный сбой (упавшая модель, необработанное исключение при инициализации
+// вплоть до отсутствия WebGL, зависшая без ответа загрузка) превращается в
+// понятный экран с кнопкой «Повторить попытку».
+//
+// Регистрируем это на уровне модуля, ДО вызова boot() — если сцена упадёт
+// синхронно на самой первой строчке (например, создание WebGL-контекста), эти
+// обработчики уже должны слушать, а не создаваться позже внутри boot().
+let loadResolved = false; // терминально: True после ЛЮБОГО финального исхода (успех/ошибка)
+
+function showLoadError(message) {
+  if (loadResolved) return; // уже финализировано — не перекрываем ни успех, ни прошлую ошибку
+  loadResolved = true;
+  document.body.classList.remove("intro-active");
+  const loader = el("loader");
+  if (loader) {
+    loader.classList.remove("is-booting", "is-cleared");
+    loader.classList.add("has-error");
+  }
+  const errText = el("loader-error-text");
+  if (errText && message) errText.textContent = message;
+}
+
+window.addEventListener("error", () => showLoadError());
+window.addEventListener("unhandledrejection", () => showLoadError());
+
 boot();
 
 function boot() {
@@ -155,8 +184,18 @@ function boot() {
   // --- Лоадер ---
   const loader = el("loader");
   const loaderPercent = el("loader-percent");
-
   const loaderPhase = el("loader-phase");
+
+  const retryBtn = el("loader-error-retry");
+  if (retryBtn) retryBtn.addEventListener("click", () => window.location.reload());
+
+  // Подстраховка от запроса, который не падает и не резолвится, а просто висит
+  // (капризный прокси/фаервол): если через 25с интро так и не началось — не молчим.
+  // На успешном пути таймер сбрасывается ниже, в Promise.allSettled(...).then(...);
+  // если он всё же сработает после успеха — showLoadError() просто не-op (loadResolved уже true).
+  const loadWatchdog = setTimeout(() => {
+    showLoadError("Загрузка занимает необычно много времени. Проверьте соединение и обновите страницу.");
+  }, 25000);
 
   // --- Вступление: Cold Boot -> Arc Descent -> Seamless Handoff ---
   // 1) Бут: пока грузятся ассеты, тёмная сцена видна сквозь полупрозрачный лоадер,
@@ -417,6 +456,8 @@ function boot() {
   });
 
   // --- Загрузка ассетов ---
+  // HDRI не критичен: без него сцена работает на прямом свете, просто без
+  // env-отражений на металле — не повод показывать ошибку и прерывать загрузку.
   const envPromise = loadEnvironment(renderer, scene)
     .then((env) => {
       sceneRefs.env = env;
@@ -424,6 +465,9 @@ function boot() {
     })
     .catch((err) => console.error("HDRI не загрузился:", err));
 
+  // Модель ровера — единственный объект сцены; без неё показывать «рабочий» сайт
+  // нельзя, поэтому её сбой запоминаем отдельно и превращаем в видимую ошибку.
+  let modelFailed = false;
   const modelPromise = loadRoverModel(scene, (p) => {
     const pct = p === null ? null : Math.round(p * 100);
     if (loaderPercent) loaderPercent.textContent = pct === null ? "…" : `${pct}%`;
@@ -436,9 +480,19 @@ function boot() {
       rig.setRoverModel(model, base);
       explodeCtl = explode;
     })
-    .catch((err) => console.error("Модель не загрузилась:", err));
+    .catch((err) => {
+      modelFailed = true;
+      console.error("Модель не загрузилась:", err);
+    });
 
   Promise.allSettled([envPromise, modelPromise]).then(() => {
+    clearTimeout(loadWatchdog);
+    if (loadResolved) return; // уже показан экран ошибки (например, синхронный крэш выше)
+    if (modelFailed) {
+      showLoadError("Не удалось загрузить 3D-модель. Проверьте соединение и отключите блокировщики контента, затем обновите страницу.");
+      return;
+    }
+    loadResolved = true;
     rig.refresh();
     startIntro(); // подлёт из космоса → выход из тени → передача ригу + проявление hero
   });

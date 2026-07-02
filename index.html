@@ -68,6 +68,15 @@
       <div class="loader-bar"><span></span></div>
       <div class="loader-status"><span id="loader-phase">Инициализация борта</span> · <span id="loader-percent">0%</span></div>
     </div>
+    <!-- Видимый отказ загрузки: сеть/блокировщик/таймаут/крэш вместо тихого зависания
+         на 0% или молчаливого перехода в пустую сцену без модели. -->
+    <div class="loader-error" id="loader-error" role="alert">
+      <div class="loader-error-title">Сбой связи с бортом</div>
+      <div class="loader-error-text" id="loader-error-text">
+        Не удалось загрузить сцену. Проверьте соединение и отключите блокировщики контента.
+      </div>
+      <button class="loader-error-retry" id="loader-error-retry" type="button">Повторить попытку</button>
+    </div>
   </div>
 
   <!-- Контент -->
