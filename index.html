@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#050814" />
+  <meta name="description" content="ПОЛЮС // Архив миссии — кинематографичный 3D-опыт про автономный лунный ровер П-6 в районах постоянной тени у кратера Шеклтон." />
+  <title>ПОЛЮС // Архив миссии — автономный лунный ровер П-6</title>
+
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="apple-touch-icon" href="/favicon.svg" />
+
+  <!-- Open Graph / соцпревью. Абсолютные URL — краулерам соцсетей нужны полные ссылки. -->
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="ru_RU" />
+  <meta property="og:title" content="ПОЛЮС // Архив миссии" />
+  <meta property="og:description" content="Кинематографичный 3D-опыт про автономный лунный ровер П-6 в районах постоянной тени у кратера Шеклтон." />
+  <meta property="og:url" content="https://samandarmansurkhodjaev2713.github.io/3d-landing/" />
+  <meta property="og:image" content="https://samandarmansurkhodjaev2713.github.io/3d-landing/og-image.svg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="ПОЛЮС // Архив миссии" />
+  <meta name="twitter:description" content="Автономный лунный ровер П-6 · районы постоянной тени · кратер Шеклтон." />
+  <meta name="twitter:image" content="https://samandarmansurkhodjaev2713.github.io/3d-landing/og-image.svg" />
+</head>
+<body>
+  <!-- Полоса прогресса скролла -->
+  <div class="scroll-progress"><span id="progress-bar"></span></div>
+
+  <!-- Навигация -->
+  <nav class="nav" id="main-nav">
+    <a class="nav-logo" id="nav-logo" href="#section-hero"></a>
+    <div class="nav-menu">
+      <div class="nav-links" id="nav-links"></div>
+    </div>
+    <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Открыть меню" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- Боковые переключатели панелей -->
+  <div id="side-toggles">
+    <button class="side-toggle" id="toggle-scene" type="button" aria-label="Настройки сцены">Сцена</button>
+    <button class="side-toggle" id="toggle-camera" type="button" aria-label="Настройки камеры">Камера</button>
+  </div>
+
+  <!-- Панель сцены -->
+  <aside class="panel" id="scene-panel" aria-label="Настройки сцены"></aside>
+
+  <!-- Панель камеры -->
+  <aside class="panel" id="camera-panel" aria-label="Настройки камеры"></aside>
+
+  <!-- 3D canvas -->
+  <div id="canvas-wrapper">
+    <canvas id="three-canvas"></canvas>
+  </div>
+
+  <!-- Атмосферные оверлеи -->
+  <div id="vignette-overlay"></div>
+  <div id="hud-layer"></div>
+
+  <!-- Лоадер -->
+  <div id="loader">
+    <div class="loader-inner">
+      <div class="loader-mark">ПОЛЮС · П-6</div>
+      <div class="loader-bar"><span></span></div>
+      <div class="loader-status"><span id="loader-phase">Инициализация борта</span> · <span id="loader-percent">0%</span></div>
+    </div>
+  </div>
+
+  <!-- Контент -->
+  <main id="scroll-container">
+    <section class="section" id="section-hero"></section>
+    <section class="section" id="section-mission"></section>
+    <section class="section" id="section-architecture"></section>
+    <section class="section" id="section-systems"></section>
+    <section class="section" id="section-log"></section>
+    <section class="section" id="section-launch"></section>
+  </main>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,265 @@
+/* ---------- Планшет: карточки в 2 колонки ---------- */
+@media (max-width: 1024px) {
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ---------- ≤768px: мобильная раскладка ---------- */
+@media (max-width: 768px) {
+  /* Учитываем «чёлку»/островок: контент не залезает под вырез на современных телефонах. */
+  .nav {
+    padding: max(16px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) 16px
+      max(20px, env(safe-area-inset-left));
+  }
+
+  .nav-toggle {
+    display: block;
+  }
+
+  /* Меню выезжает справа */
+  .nav-menu {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100dvh;
+    width: min(84vw, 340px);
+    padding: 100px 30px 36px;
+    background: var(--panel-bg);
+    border-left: 1px solid var(--border-soft);
+    backdrop-filter: blur(18px);
+    transform: translateX(100%);
+    transition: transform 0.5s var(--ease);
+  }
+
+  .nav--open .nav-menu {
+    transform: translateX(0);
+  }
+
+  .nav-links {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+  }
+
+  .nav-link {
+    font-size: 17px;
+    color: var(--white);
+  }
+
+  .nav-link--cta {
+    margin-top: 10px;
+  }
+
+  /* --- Hero на мобильных: индекс сверху, заголовок и краткое описание снизу --- */
+  .hero-index {
+    top: 82px;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+  }
+
+  .hero-title {
+    left: var(--pad-x);
+    right: var(--pad-x);
+    bottom: clamp(188px, 33vh, 264px);
+  }
+
+  .hero-summary {
+    display: block;
+    position: absolute;
+    left: var(--pad-x);
+    right: var(--pad-x);
+    bottom: clamp(98px, 15vh, 150px);
+    max-width: none;
+    font-size: 14.5px;
+    color: rgba(234, 242, 255, 0.82);
+  }
+
+  .hero-meta {
+    display: none;
+  }
+
+  .scroll-indicator {
+    left: var(--pad-x);
+    bottom: 38px;
+    transform: none;
+    align-items: flex-start;
+  }
+
+  /* Усиливаем нижнее затемнение, чтобы текст всегда читался поверх модели */
+  .hero::before {
+    background:
+      linear-gradient(0deg, rgba(5, 8, 20, 0.92) 0%, rgba(5, 8, 20, 0.55) 40%, transparent 72%);
+  }
+
+  /* Секции */
+  .section {
+    min-height: auto;
+  }
+
+  /* На мобильных секции с текстом — естественной высоты (текста много),
+     чтобы контент не обрезался фиксированной высотой 100vh и не лез под навигацию. */
+  .section-inner:not(.hero) {
+    position: relative;
+    height: auto;
+    min-height: 100vh;
+    justify-content: flex-start;
+    padding: 100px var(--pad-x) 92px;
+    gap: 20px;
+  }
+
+  .section-inner--center {
+    justify-content: center;
+  }
+
+  .section-inner--left,
+  .section-inner--right,
+  .section-inner--bottom {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  /* На мобильных секции высокие (текст во всю ширину поверх ровера-фона).
+     Маску стыка отключаем (она для десктопных 100vh-секций), а scrim делаем
+     почти равномерным — тогда стоящие друг на друге секции стыкуются бесшовно. */
+  .section-inner::before {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .section-inner--left::before,
+  .section-inner--right::before,
+  .section-inner--bottom::before,
+  .section-inner--center::before {
+    background: linear-gradient(180deg, rgba(8, 8, 11, 0.72), rgba(8, 8, 11, 0.68));
+  }
+
+  .block,
+  .block--narrow,
+  .block-head {
+    max-width: 100%;
+  }
+
+  .specs {
+    align-self: stretch;
+    max-width: 100%;
+  }
+
+  .spec-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+
+  .spec-val {
+    text-align: left;
+  }
+
+  .cards {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* Статистика — 3 в ряд равными колонками (дашборд-вид). */
+  .stats {
+    gap: 14px;
+  }
+  .stat {
+    flex: 1;
+    min-width: 0;
+  }
+  .stat-label {
+    max-width: none;
+  }
+
+  .log-entry {
+    gap: 14px;
+  }
+
+  /* HUD: на мобильных оставляем только атмосферную линию сканирования */
+  .hud-rail,
+  .hud-corner--tr,
+  .hud-corner--br {
+    display: none;
+  }
+
+  /* Панели на весь экран */
+  .panel {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Боковые переключатели компактнее */
+  .side-toggle {
+    padding: 12px 7px;
+    font-size: 10px;
+  }
+
+  /* CTA и футер — в колонку */
+  .launch-footer {
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+  }
+}
+
+/* ---------- ≤480px: телефоны ---------- */
+@media (max-width: 480px) {
+  .hero-line {
+    font-size: clamp(34px, 13.5vw, 66px);
+  }
+
+  .section-title {
+    font-size: clamp(34px, 11vw, 56px);
+  }
+
+  .section-lead {
+    font-size: 16px;
+  }
+
+  .launch-headline span {
+    font-size: clamp(40px, 14vw, 70px);
+  }
+
+  .quote {
+    font-size: clamp(23px, 7vw, 34px);
+  }
+
+  .hud-corner {
+    display: none;
+  }
+
+  .stat-value {
+    font-size: clamp(38px, 13vw, 52px);
+  }
+
+  /* На узких телефонах — каждый стат в строку: крупное число + подпись рядом. */
+  .stats {
+    flex-direction: column;
+    gap: 14px;
+  }
+  .stat {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+  }
+  .stat-value {
+    flex-shrink: 0;
+  }
+  .stat-label {
+    line-height: 1.3;
+  }
+
+  .cta-button {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* Защита от горизонтального переполнения */
+@media (max-width: 768px) {
+  html, body {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+}

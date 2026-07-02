@@ -1,0 +1,71 @@
+/* Кастомный курсор-прицел. Активен только на десктопе (hover+fine). */
+@media (hover: hover) and (pointer: fine) {
+  body.has-custom-cursor,
+  body.has-custom-cursor a,
+  body.has-custom-cursor button,
+  body.has-custom-cursor .card,
+  body.has-custom-cursor input[type="range"] {
+    cursor: none;
+  }
+}
+
+#cursor-dot,
+#cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  pointer-events: none;
+  will-change: transform;
+  transition: opacity 0.25s var(--ease);
+}
+
+#cursor-dot {
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px rgba(103, 213, 255, 0.85);
+}
+
+#cursor-dot.is-hover {
+  background: var(--white);
+}
+
+.cur-box {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 40px;
+  height: 40px;
+  transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  transition: transform 0.3s var(--ease);
+}
+
+.cur-corner {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border: 1.5px solid rgba(234, 242, 255, 0.5);
+  transition: border-color 0.3s var(--ease), width 0.3s var(--ease), height 0.3s var(--ease);
+}
+
+.cur-tl { top: 0; left: 0; border-right: none; border-bottom: none; }
+.cur-tr { top: 0; right: 0; border-left: none; border-bottom: none; }
+.cur-bl { bottom: 0; left: 0; border-right: none; border-top: none; }
+.cur-br { bottom: 0; right: 0; border-left: none; border-top: none; }
+
+/* Наведение на интерактив: скобки стягиваются, поворачиваются и подсвечиваются. */
+#cursor-ring.is-hover .cur-box {
+  transform: translate(-50%, -50%) scale(0.62) rotate(45deg);
+}
+
+#cursor-ring.is-hover .cur-corner {
+  border-color: var(--accent);
+}
+
+/* Нажатие. */
+#cursor-ring.is-down .cur-box {
+  transform: translate(-50%, -50%) scale(0.5) rotate(45deg);
+}

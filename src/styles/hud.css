@@ -1,0 +1,50 @@
+/* HUD-слой: декоративная рамка поверх canvas, но под контентом секций. */
+#hud-layer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-hud);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Угловые L-маркеры рамки кадра */
+.hud-corner {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--border-soft);
+  opacity: 0.7;
+}
+
+.hud-corner--tl { top: 86px; left: 22px; border-right: none; border-bottom: none; }
+.hud-corner--tr { top: 86px; right: 22px; border-left: none; border-bottom: none; }
+.hud-corner--bl { bottom: 22px; left: 22px; border-right: none; border-top: none; }
+.hud-corner--br { bottom: 22px; right: 22px; border-left: none; border-top: none; }
+
+/* Вертикальная телеметрия — тонкая полоса у левого края, в зоне отступов.
+   Текст идёт сбоку (как у боковых кнопок), не пересекается с контентом. */
+.hud-rail {
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  writing-mode: vertical-rl;
+  max-height: 72vh;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(150, 158, 178, 0.55);
+  font-variant-numeric: tabular-nums;
+  transition: color 0.15s linear;
+  /* Мягкое затухание сверху и снизу, чтобы обрезка строки выглядела намеренной */
+  -webkit-mask-image: linear-gradient(transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(transparent, #000 12%, #000 88%, transparent);
+}
+
+/* Глитч в момент восстановления связи */
+.hud-rail.is-glitch {
+  color: var(--accent);
+  transition: none;
+}

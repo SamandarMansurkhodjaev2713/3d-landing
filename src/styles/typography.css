@@ -1,0 +1,88 @@
+/* Заголовки — Barlow Condensed, плотно, uppercase. */
+.section-title,
+.launch-headline,
+.hero-line {
+  font-family: var(--font-head);
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 0.92;
+  letter-spacing: 0.005em;
+}
+
+.section-tag,
+.launch-label,
+.nav-link,
+.nav-logo,
+.side-toggle,
+.scroll-indicator__text,
+.stat-label {
+  font-family: var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+
+/* Тело текста — Inter, читабельно, без избыточного трекинга на русском. */
+.section-body,
+.spec-val,
+.card-desc {
+  font-size: clamp(14px, 1.05vw, 16px);
+  line-height: 1.65;
+  color: rgba(234, 242, 255, 0.82);
+  font-weight: 400;
+  text-wrap: pretty; /* без «висячих» одиночных слов в конце абзаца */
+}
+
+.section-lead,
+.hero-summary {
+  text-wrap: pretty;
+}
+
+.section-tag,
+.launch-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.section-title {
+  font-size: clamp(40px, 6.4vw, 92px);
+  color: var(--white);
+}
+
+.quote {
+  font-family: var(--font-head);
+  font-weight: 700;
+  text-transform: none;
+  font-size: clamp(26px, 4vw, 56px);
+  line-height: 1.12;
+  letter-spacing: 0.005em;
+  color: var(--white);
+  text-wrap: balance; /* ровные строки цитаты */
+}
+
+/* Мягкая «подложка» тенью — гарантирует читабельность поверх звёзд/модели,
+   в дополнение к градиентным scrim'ам. Большой размытый радиус = ореол, не жёсткая тень. */
+.section-title,
+.launch-headline,
+.hero-line,
+.quote {
+  text-shadow: 0 2px 26px rgba(4, 6, 11, 0.55);
+}
+
+.section-tag,
+.section-lead,
+.section-body,
+.spec-key,
+.spec-val,
+.card-name,
+.card-desc,
+.hero-meta li,
+.hero-summary,
+.log-time,
+.log-text,
+.quote-attr,
+.launch-label,
+.launch-footer,
+.scroll-indicator__text {
+  text-shadow: 0 1px 14px rgba(4, 6, 11, 0.6);
+}

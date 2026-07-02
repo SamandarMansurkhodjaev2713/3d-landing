@@ -1,0 +1,101 @@
+/* Слой хотспотов инспекции — над сценой, под контентом секций. */
+#hotspot-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  transition: opacity 0.45s var(--ease);
+}
+
+.hotspot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: -8px 0 0 -8px; /* центрируем 16px точку на проекции */
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  cursor: none;
+  will-change: transform;
+}
+
+.hotspot-dot {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid rgba(103, 213, 255, 0.7);
+  flex-shrink: 0;
+}
+
+.hotspot-dot::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px rgba(103, 213, 255, 0.8);
+}
+
+.hotspot-dot::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  animation: hotspot-pulse 2.6s var(--ease) infinite;
+}
+
+@keyframes hotspot-pulse {
+  0% { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+.hotspot-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 0;
+  transition: max-width 0.45s var(--ease), opacity 0.3s var(--ease);
+  text-align: left;
+}
+
+.hotspot:hover .hotspot-info,
+.hotspot.is-open .hotspot-info {
+  max-width: 280px;
+  opacity: 1;
+}
+
+.hotspot:hover .hotspot-dot,
+.hotspot.is-open .hotspot-dot {
+  border-color: var(--accent);
+}
+
+.hotspot-title {
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--white);
+}
+
+.hotspot-desc {
+  font-size: 11px;
+  color: var(--gray);
+}
+
+/* На телефонах инспекция-хотспоты не показываем (ровер — фон под текстом). */
+@media (max-width: 768px) {
+  #hotspot-layer { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hotspot-dot::after { animation: none; }
+}

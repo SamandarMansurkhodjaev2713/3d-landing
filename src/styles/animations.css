@@ -1,0 +1,165 @@
+/* ---------- Появление блоков (blur-to-clear) ---------- */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+  transition-delay: calc(var(--i, 0) * 0.07s);
+  will-change: opacity, transform;
+}
+
+[data-reveal].is-revealed {
+  opacity: 1;
+  transform: none;
+}
+
+/* Построчный «выезд» заголовков из-под маски (кинематографично). */
+.section-title .ln {
+  display: block;
+  overflow: hidden;
+  padding: 0.08em 0.03em;
+  margin: -0.08em -0.03em;
+}
+
+.section-title .ln-in {
+  display: block;
+  transform: translateY(115%);
+  transition: transform 0.9s var(--ease);
+  transition-delay: calc(var(--l, 0) * 0.09s + 0.05s);
+  will-change: transform;
+}
+
+[data-reveal].is-revealed .section-title .ln-in {
+  transform: translateY(0);
+}
+
+/* HUD-акцент: чёрточка тега «прочерчивается» при появлении. */
+.section-tag::before {
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.6s var(--ease) 0.18s;
+}
+
+[data-reveal].is-revealed .section-tag::before {
+  transform: scaleX(1);
+}
+
+/* HUD-акцент «развёртка»: по заголовку один раз проходит сканирующая полоса света. */
+.section-title {
+  position: relative;
+}
+
+.section-title::after {
+  content: "";
+  position: absolute;
+  inset: -0.1em -0.2em;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(100deg, transparent 40%, rgba(103, 213, 255, 0.22) 50%, transparent 60%);
+}
+
+[data-reveal].is-revealed .section-title::after {
+  animation: title-sweep 1s var(--ease) 0.25s;
+}
+
+@keyframes title-sweep {
+  0% { opacity: 0; transform: translateX(-55%); }
+  35% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(55%); }
+}
+
+/* ---------- Хром интерфейса появляется после загрузки ---------- */
+.nav {
+  opacity: 0;
+  transform: translateY(-16px);
+  transition: opacity 0.8s var(--ease), transform 0.8s var(--ease);
+}
+
+body.is-loaded .nav { opacity: 1; transform: none; }
+
+#side-toggles,
+.scroll-progress {
+  opacity: 0;
+  transition: opacity 0.8s var(--ease) 0.4s;
+}
+
+body.is-loaded #side-toggles,
+body.is-loaded .scroll-progress { opacity: 1; }
+
+/* ---------- Hero reveal (по hero-ready) ---------- */
+.hero-line,
+.hero-meta li,
+.scroll-indicator {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.9s var(--ease), transform 0.9s var(--ease);
+}
+
+.hero-meta li { transform: translateX(20px); }
+
+body.hero-ready .hero-line,
+body.hero-ready .hero-meta li,
+body.hero-ready .scroll-indicator {
+  opacity: 1;
+  transform: none;
+}
+
+body.hero-ready .hero-line--1 { transition-delay: 0.15s; }
+body.hero-ready .hero-line--stroke { transition-delay: 0.3s; }
+body.hero-ready .hero-line--2 { transition-delay: 0.45s; }
+body.hero-ready .hero-meta li:nth-child(1) { transition-delay: 0.62s; }
+body.hero-ready .hero-meta li:nth-child(2) { transition-delay: 0.72s; }
+body.hero-ready .hero-meta li:nth-child(3) { transition-delay: 0.82s; }
+body.hero-ready .scroll-indicator { transition-delay: 1s; }
+
+/* ---------- Циклические keyframes ---------- */
+@keyframes scroll-drop {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(260%); }
+}
+
+@keyframes hud-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+@keyframes hud-scan {
+  0% { top: -2%; }
+  100% { top: 102%; }
+}
+
+@keyframes cta-scan {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(120%); }
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  [data-reveal],
+  .hero-line,
+  .hero-meta li,
+  .scroll-indicator,
+  .nav,
+  #side-toggles,
+  .scroll-progress,
+  .section-title .ln-in,
+  .section-tag::before {
+    opacity: 1 !important;
+    filter: none !important;
+    transform: none !important;
+  }
+
+  .hud-scanline,
+  .hud-dot,
+  .scroll-indicator__line::after,
+  .loader-bar span {
+    animation: none !important;
+  }
+}

@@ -1,0 +1,212 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Oswald:wght@400;500;600;700&display=swap');
+
+:root {
+  --black: #0A0A0C;
+  --white: #EAF2FF;
+  --accent: #67D5FF;
+  --accent-2: #9C8CFF;
+  --gray: #7B859F;
+  --light-gray: #111827;
+  --panel-bg: rgba(5, 8, 20, 0.92);
+  --border-soft: rgba(234, 242, 255, 0.09);
+  --accent-soft: rgba(103, 213, 255, 0.14);
+
+  --font-head: 'Oswald', 'Inter', sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+
+  --pad-x: clamp(20px, 5vw, 80px);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --z-canvas: 1;
+  --z-vignette: 2;
+  --z-hud: 3;
+  --z-content: 5;
+  --z-chrome: 50;
+  --z-panel: 60;
+  --z-progress: 70;
+  --z-loader: 100;
+}
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: auto;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100%;
+  /* Лунный полусвет. Монохром: единственный цвет в кадре даёт жёлтый ровер.
+     Слои: солнечный отблеск из верх-левого угла (по направлению 3D-солнца),
+     холодная «космическая» верхушка, тёплый отблеск реголита у горизонта,
+     шёпот линии горизонта и вертикальная база космос→грунт. */
+  background:
+    radial-gradient(1000px 760px at 16% 6%, rgba(128, 116, 96, 0.20), transparent 56%),
+    radial-gradient(1500px 900px at 62% -12%, rgba(44, 48, 58, 0.16), transparent 58%),
+    radial-gradient(1700px 520px at 50% 114%, rgba(140, 116, 86, 0.18), transparent 70%),
+    linear-gradient(180deg, transparent 60%, rgba(150, 130, 102, 0.05) 69%, transparent 77%),
+    linear-gradient(180deg, #070709 0%, #0c0c10 44%, #0b0907 74%, #060504 100%);
+  color: var(--white);
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  /* Мобильная полировка: без синей вспышки при тапе, без резинового overscroll
+     (иммерсивный кадр не «оттягивается» и не показывает белое за краем). */
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+body.menu-locked {
+  overflow: hidden;
+}
+
+/* Блокируем скролл на время вступительной анимации (камера летит сама). */
+body.intro-active {
+  overflow: hidden;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--white);
+}
+
+/* Вертикальный акцентный glow позади модели */
+#canvas-wrapper::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 54%;
+  width: 64vmin;
+  height: 64vmin;
+  transform: translate(-50%, -50%);
+  /* Статичный, едва заметный тёплый ореол — отделяет силуэт от фона, не «дышит». */
+  background: radial-gradient(circle, rgba(255, 244, 224, 0.06), rgba(150, 130, 102, 0.03) 45%, transparent 70%);
+  filter: blur(16px);
+  pointer-events: none;
+}
+
+/* Виньетка — единственный «оптический» слой (сетку убрали ради чистоты кадра) */
+#vignette-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-vignette);
+  pointer-events: none;
+  background:
+    radial-gradient(120% 120% at 50% 45%, transparent 54%, rgba(7, 7, 9, 0.5) 82%, rgba(7, 7, 9, 0.92) 100%);
+}
+
+/* Едва заметное плёночное зерно */
+#vignette-overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.02;
+}
+
+/* Лоадер */
+#loader {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-loader);
+  display: grid;
+  place-items: center;
+  background: var(--black);
+  transition: opacity 0.7s var(--ease), visibility 0.7s var(--ease);
+}
+
+#loader.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Cold Boot: лоадер становится полупрозрачным — сквозь него видно тёмное звёздное
+   небо (загрузка как «пробуждение борта»), а телеметрия читается поверх. */
+#loader.is-booting {
+  background: rgba(5, 6, 10, 0.42);
+  backdrop-filter: blur(1.5px);
+  -webkit-backdrop-filter: blur(1.5px);
+}
+
+/* Связь установлена: шкала добивается до полной, статус — акцентным. */
+#loader.is-cleared .loader-bar span {
+  width: 100%;
+  animation: none;
+  background: var(--accent);
+  opacity: 0.95;
+  transition: width 0.45s var(--ease);
+}
+
+#loader.is-cleared .loader-status {
+  color: var(--accent);
+  transition: color 0.4s var(--ease);
+}
+
+.loader-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.loader-mark {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: clamp(28px, 6vw, 48px);
+  letter-spacing: 0.16em;
+  color: var(--white);
+}
+
+.loader-bar {
+  width: clamp(160px, 40vw, 260px);
+  height: 2px;
+  background: var(--border-soft);
+  overflow: hidden;
+}
+
+.loader-bar span {
+  display: block;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: loader-sweep 1.2s var(--ease) infinite;
+}
+
+.loader-status {
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+
+@keyframes loader-sweep {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(360%); }
+}

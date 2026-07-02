@@ -1,0 +1,219 @@
+/* Выезжающие панели настроек (сцена / камера). */
+.panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: var(--z-panel);
+  width: 340px;
+  max-width: 92vw;
+  height: 100%;
+  padding: 26px 24px 32px;
+  background: var(--panel-bg);
+  border-left: 1px solid var(--border-soft);
+  backdrop-filter: blur(16px);
+  overflow-y: auto;
+  transform: translateX(105%);
+  transition: transform 0.5s var(--ease);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.panel--open {
+  transform: translateX(0);
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panel-title {
+  font-family: var(--font-head);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  color: var(--white);
+}
+
+.panel-close {
+  width: 30px;
+  height: 30px;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--gray);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  transition: color 0.3s var(--ease), border-color 0.3s var(--ease);
+}
+
+.panel-close:hover {
+  color: var(--white);
+  border-color: var(--accent-soft);
+}
+
+.panel-subtitle {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+}
+
+/* Drag-pad */
+.drag-pad {
+  position: relative;
+  height: 84px;
+  border: 1px dashed var(--border-soft);
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  cursor: grab;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(103, 213, 255, 0.08), transparent 70%),
+    repeating-linear-gradient(90deg, transparent, transparent 18px, var(--border-soft) 18px, var(--border-soft) 19px);
+  touch-action: none;
+  transition: border-color 0.3s var(--ease);
+}
+
+.drag-pad:hover { border-color: var(--accent-soft); }
+.drag-pad.is-dragging { cursor: grabbing; border-color: var(--accent); }
+
+.drag-pad__hint {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--gray);
+  pointer-events: none;
+}
+
+.drag-pad__dot {
+  position: absolute;
+  bottom: 10px;
+  right: 12px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px rgba(103, 213, 255, 0.7);
+}
+
+/* Список контролов */
+.panel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.control {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.control-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.control-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--gray);
+}
+
+.control-value {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--white);
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--border-soft);
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px rgba(103, 213, 255, 0.55);
+  transition: transform 0.2s var(--ease);
+}
+
+input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.18); }
+
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px rgba(103, 213, 255, 0.55);
+}
+
+input[type="range"]::-moz-range-track {
+  height: 2px;
+  border-radius: 2px;
+  background: var(--border-soft);
+}
+
+/* Кнопки панели */
+.panel-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.panel-btn {
+  position: relative;
+  width: 100%;
+  padding: 11px;
+  overflow: hidden;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--white);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  transition: background 0.3s var(--ease), border-color 0.3s var(--ease), color 0.3s var(--ease);
+}
+
+.panel-btn::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--accent);
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform 0.3s var(--ease);
+}
+
+.panel-btn:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.panel-btn:hover::before {
+  transform: scaleY(1);
+}
+
+.panel-btn:active {
+  transform: scale(0.98);
+}
