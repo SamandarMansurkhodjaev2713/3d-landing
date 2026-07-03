@@ -4,6 +4,14 @@
 в районах постоянной тени у кратера Шеклтон (южный полюс Луны). Сюжет и техника
 вымышлены; сайт — авторский портфолио-проект.
 
+## English Overview
+
+**POLUS // Mission Archive** is a cinematic Three.js/WebGL landing page built as a portfolio-grade frontend project. It presents a fictional autonomous lunar rover mission through a full-screen 3D scene, scroll-driven camera choreography, model disassembly, adaptive performance and carefully staged visual storytelling.
+
+The project demonstrates visual frontend engineering beyond a static landing page: pure Three.js scene architecture, responsive camera rigs, real asset optimization, desktop/mobile quality branches, production-only UI cleanup, GitHub Pages deployment and performance-aware rendering.
+
+**Live demo:** https://samandarmansurkhodjaev2713.github.io/3d-landing/
+
 Технически это WebGL-сцена на чистом Three.js (без React/GSAP/игровых движков),
 собранная как fullscreen-canvas с прокруткой: камера летит между шестью ракурсами
 по секциям, ровер разбирается и собирается на середине пути, поверхность —
