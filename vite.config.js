@@ -8,8 +8,12 @@ import { defineConfig } from "vite";
 //   build → "/3d-landing/"  (проект-сайт GitHub Pages живёт в подпапке /<repo>/)
 // Все рантайм-пути к ассетам собираются через import.meta.env.BASE_URL,
 // поэтому одинаково работают и локально, и на GitHub Pages.
-export default defineConfig(({ command }) => ({
-  base: command === "build" ? "/3d-landing/" : "/",
+export default defineConfig(({ command, mode }) => ({
+  // Preview запускается командой `serve`, как и dev-сервер, но в production-mode.
+  // Поэтому одной проверки `command === "build"` недостаточно: собранный HTML
+  // ссылался бы на /3d-landing/, а preview искал бы ассеты от корня и возвращал
+  // index.html вместо CSS/JS. Production-mode сохраняет один base для build/preview.
+  base: command === "build" || mode === "production" ? "/3d-landing/" : "/",
   server: {
     host: true,
     open: false

@@ -62,10 +62,10 @@ export function loadRoverModel(scene, onProgress) {
 
         // Сплющиваем иерархию и строим разборку. root заменяет модель в сцене:
         // смещение по ракурсам теперь нулевое (всё запечено), им управляет explode.
-        const { root, explode } = buildExplode(scene, model);
+        const { root, explode, ground } = buildExplode(scene, model);
 
         draco.dispose();
-        resolve({ model: root, base: new THREE.Vector3(0, 0, 0), explode });
+        resolve({ model: root, base: new THREE.Vector3(0, 0, 0), explode, ground });
       },
       (event) => {
         if (onProgress && event.lengthComputable) {

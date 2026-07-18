@@ -27,7 +27,7 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  border: 1px solid rgba(103, 213, 255, 0.7);
+  border: 1px solid rgba(169, 215, 229, 0.7);
   flex-shrink: 0;
 }
 
@@ -36,8 +36,8 @@
   position: absolute;
   inset: 5px;
   border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 10px rgba(103, 213, 255, 0.8);
+  background: var(--instrument);
+  box-shadow: none;
 }
 
 .hotspot-dot::after {
@@ -45,7 +45,7 @@
   position: absolute;
   inset: -1px;
   border-radius: 50%;
-  border: 1px solid var(--accent);
+  border: 1px solid var(--instrument);
   animation: hotspot-pulse 2.6s var(--ease) infinite;
 }
 
@@ -74,7 +74,7 @@
 
 .hotspot:hover .hotspot-dot,
 .hotspot.is-open .hotspot-dot {
-  border-color: var(--accent);
+  border-color: var(--instrument);
 }
 
 .hotspot-title {

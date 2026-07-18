@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="7" fill="#0A0A0C"/>
+  <rect width="32" height="32" rx="7" fill="#030303"/>
   <!-- кромка кратера -->
-  <circle cx="16" cy="16" r="9.5" fill="none" stroke="#67D5FF" stroke-width="1.3" opacity="0.85"/>
+  <circle cx="16" cy="16" r="9.5" fill="none" stroke="#A9D7E5" stroke-width="1.3" opacity="0.72"/>
   <!-- прицельные тики -->
-  <g stroke="#EAF2FF" stroke-width="1" opacity="0.55">
+  <g stroke="#F1F0EB" stroke-width="1" opacity="0.55">
     <line x1="16" y1="2.5" x2="16" y2="6"/>
     <line x1="16" y1="26" x2="16" y2="29.5"/>
     <line x1="2.5" y1="16" x2="6" y2="16"/>
     <line x1="26" y1="16" x2="29.5" y2="16"/>
   </g>
   <!-- ровер у полюса -->
-  <circle cx="19.6" cy="19.6" r="2.6" fill="#FFCB57"/>
+  <circle cx="19.6" cy="19.6" r="2.6" fill="#D9B862"/>
 </svg>

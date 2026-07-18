@@ -10,6 +10,7 @@ import "./styles/animations.css";
 import "./styles/cursor.css";
 import "./styles/hotspots.css";
 import "./styles/responsive.css";
+import "./styles/editorial.css";
 
 import { CONTENT } from "./config/content.js";
 import { CAMERA_KEYFRAMES, CAMERA_KEYFRAMES_MOBILE, SECTION_IDS } from "./config/cameraKeyframes.js";
@@ -22,6 +23,7 @@ import { createSky } from "./three/createSky.js";
 import { createSunBody } from "./three/createSunBody.js";
 import { createDust } from "./three/createDust.js";
 import { createScan } from "./three/createScan.js";
+import { createArchiveReconstruction } from "./three/createArchiveReconstruction.js";
 import { createComposer } from "./three/createComposer.js";
 import { loadEnvironment } from "./three/loadEnvironment.js";
 import { loadRoverModel } from "./three/loadRoverModel.js";
@@ -40,6 +42,7 @@ import { initCursor } from "./ui/cursor.js";
 import { createHotspots } from "./ui/hotspots.js";
 import { createCameraPanel } from "./ui/cameraPanel.js";
 import { createScenePanel } from "./ui/scenePanel.js";
+import { createSectionDirector } from "./ui/sectionDirector.js";
 
 const el = (id) => document.getElementById(id);
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -74,6 +77,9 @@ function showLoadError(message) {
 window.addEventListener("error", () => showLoadError());
 window.addEventListener("unhandledrejection", () => showLoadError());
 
+if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+window.scrollTo(0, 0);
+
 boot();
 
 function boot() {
@@ -86,7 +92,7 @@ function boot() {
   const camera = createCamera();
   const lights = createLights(scene);
 
-  // Звёздное небо (мерцание, параллакс, туманности, Земля).
+  // Физически сдержанное лунное небо: статичные звёзды, слабый Млечный Путь и Земля.
   const sky = createSky({ isMobile, pixelRatio: renderer.getPixelRatio() });
   scene.add(sky.group);
 
@@ -143,17 +149,15 @@ function boot() {
   const progressBar = createProgressBar(el("progress-bar"));
   const activeSection = createActiveSection(nav.links);
   const hud = createHud(el("hud-layer"));
+  const sectionDirector = createSectionDirector({ reducedMotion });
   initReveal();
   initCountUp({ reducedMotion });
   initMagneticButton(el("launch-button"), { reducedMotion });
   initCursor({ reducedMotion });
 
-  // Кнопка CTA — мягкий возврат к началу архива.
-  const launchBtn = el("launch-button");
-  if (launchBtn) {
-    launchBtn.addEventListener("click", () =>
-      window.scrollTo({ top: 0, behavior: reducedMotion ? "auto" : "smooth" })
-    );
+  const replayBtn = el("replay-button");
+  if (replayBtn) {
+    replayBtn.addEventListener("click", () => window.location.reload());
   }
 
   // --- Панели настройки (СЦЕНА/КАМЕРА). Только в dev-режиме (для локальной донастройки);
@@ -203,7 +207,7 @@ function boot() {
   // 2) Дуга: камера заходит по дуге (Безье) и НАХОДИТ ровер поздним рефреймом взгляда
   //    в последней трети — ровно когда восходит солнце (диск + свет + пыль).
   // 3) Склейка: лоадер уходит рано, hero-текст и хром накатываются на хвост движения.
-  const INTRO_DUR = 3.6; // длительность дуги (бут-фаза = время загрузки)
+  const INTRO_DUR = 4.2;
   // Широкий взгляд бута/начала дуги направлен НА солнце (к вектору ключевого света,
   // -x, низко над горизонтом). Сначала смотрим, как над зубчатой кромкой восходит
   // солнце, затем поздним рефреймом разворачиваемся и находим ровер в его свете.
@@ -271,7 +275,10 @@ function boot() {
     lights.sun.intensity = sunTarget * lr;
     renderer.toneMappingExposure = lin(0.2, expTarget, lr);
     sunBody.setIntensity(lr);
-    dust.setIntensity(lr);
+    dust.setIntensity(lr * (1 - smooth01(0.72, 1, t)) * 0.72);
+    const reconstructionProgress = smooth01(0.58, 0.94, t);
+    const reconstructionOpacity = 0.98 * (1 - smooth01(0.88, 1, t));
+    if (reconstructionCtl) reconstructionCtl.setIntro(reconstructionProgress, reconstructionOpacity);
     // Seamless Handoff: лоадер уходит рано, текст и хром — на хвост движения.
     if (!hidLoader && t > 0.08) {
       hidLoader = true;
@@ -292,6 +299,7 @@ function boot() {
   function startIntro() {
     heroPose = rig.poseAt(0);
     rig.parkRover(0); // ровер заранее в hero-позе — без рывка при передаче ригу
+    if (reconstructionCtl) reconstructionCtl.setIntro(0, 0.98);
     if (reducedMotion) {
       finishIntro();
       return;
@@ -331,8 +339,9 @@ function boot() {
     lights.sun.intensity = sunTarget;
     renderer.toneMappingExposure = expTarget;
     sunBody.setIntensity(1);
-    dust.setIntensity(1);
-    scan.setIntensity(1);
+    dust.setIntensity(0);
+    scan.setIntensity(0);
+    if (reconstructionCtl) reconstructionCtl.finish();
     if (loader) loader.classList.add("is-hidden");
     document.body.classList.remove("intro-active");
     document.body.classList.add("is-loaded"); // хром и hero проявляются на финале
@@ -361,6 +370,7 @@ function boot() {
   // --- Главный цикл ---
   let lastIndex = -1;
   let explodeCtl = null;
+  let reconstructionCtl = null;
   // Инерция камеры/сцены (Stage D): запаздывание + velocity-дрейф звёзд по скорости скролла.
   let prevSF = 0;
   let velDrift = 0;
@@ -390,6 +400,16 @@ function boot() {
     }
     rig.update(dt);
     const sf = rig.state.sectionFloat;
+    sectionDirector.update(sf);
+    const missionDust = Math.max(0, 1 - Math.abs(sf - 1.08) / 0.34);
+    dust.setIntensity(missionDust * 0.24);
+    const terrainPulse = Math.max(0, 1 - Math.abs(sf - 1.45) / 0.52);
+    scan.setIntensity(terrainPulse * 0.22);
+    if (reconstructionCtl) {
+      const inspection = Math.max(0, 1 - Math.abs(sf - 2) / 0.72);
+      const inspectionProgress = Math.max(0, Math.min(1, (sf - 1.62) / 0.76));
+      reconstructionCtl.setInspection(inspectionProgress, inspection * 0.52);
+    }
     // Разборка ровера по скроллу: раскрывается к секции «Системы» (3) и собирается обратно.
     if (explodeCtl) {
       explodeCtl.setAmount(Math.max(0, 1 - Math.abs(sf - 3) / 1.3));
@@ -479,6 +499,10 @@ function boot() {
     .then(({ model, base, explode }) => {
       rig.setRoverModel(model, base);
       explodeCtl = explode;
+      reconstructionCtl = createArchiveReconstruction(model, {
+        isMobile,
+        pixelRatio: renderer.getPixelRatio()
+      });
     })
     .catch((err) => {
       modelFailed = true;
@@ -509,6 +533,7 @@ function boot() {
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, pixelRatioCap()));
       renderer.setSize(window.innerWidth, window.innerHeight);
       if (composerCtl) composerCtl.setSize(window.innerWidth, window.innerHeight);
+      if (reconstructionCtl) reconstructionCtl.setPixelRatio(renderer.getPixelRatio());
       rig.refresh();
     });
   });
@@ -590,14 +615,36 @@ function missionMarkup() {
       </div>`
     )
     .join("");
+  const route = m.route;
   return `
     <div class="section-inner section-inner--left">
-      <div class="block" data-reveal>
-        <span class="section-tag">${m.tag}</span>
-        <h2 class="section-title">${lines(m.title)}</h2>
-        <p class="section-lead">${m.lead}</p>
-        <p class="section-body">${m.body}</p>
-        <p class="section-body section-body--muted">${m.body2}</p>
+      <div class="mission-layout">
+        <div class="block" data-reveal>
+          <span class="section-tag">${m.tag}</span>
+          <h2 class="section-title">${lines(m.title)}</h2>
+          <p class="section-lead">${m.lead}</p>
+          <p class="section-body">${m.body}</p>
+          <p class="section-body section-body--muted">${m.body2}</p>
+        </div>
+        <figure class="route-profile" data-reveal style="--i:2">
+          <figcaption>
+            <span>${route.label}</span>
+            <strong>${route.distance}</strong>
+          </figcaption>
+          <svg viewBox="0 0 640 150" role="img" aria-label="Профиль автономного маршрута">
+            <path class="route-grid" d="M0 128H640M0 88H640M0 48H640"/>
+            <path class="route-base" d="M12 118 C88 104 110 70 174 78 S250 126 306 96 S392 34 448 52 S532 112 628 36"/>
+            <path class="route-progress-line" pathLength="1" d="M12 118 C88 104 110 70 174 78 S250 126 306 96 S392 34 448 52 S532 112 628 36"/>
+            <circle class="route-point route-point--start" cx="12" cy="118" r="4"/>
+            <circle class="route-point route-point--event" cx="306" cy="96" r="5"/>
+            <circle class="route-point route-point--finish" cx="628" cy="36" r="4"/>
+          </svg>
+          <div class="route-labels">
+            <span>${route.start}</span>
+            <span>${route.event}<small>${route.correction}</small></span>
+            <span>${route.finish}</span>
+          </div>
+        </figure>
       </div>
       <div class="stats">${stats}</div>
     </div>`;
@@ -605,6 +652,19 @@ function missionMarkup() {
 
 function architectureMarkup() {
   const a = CONTENT.architecture;
+  const groups = a.groups
+    .map(
+      (group, i) => `
+      <article class="architecture-group" data-reveal style="--i:${i}">
+        <span class="architecture-group__number">${group.number}</span>
+        <div>
+          <h3>${group.title}</h3>
+          <p>${group.lead}</p>
+          <small>${group.meta}</small>
+        </div>
+      </article>`
+    )
+    .join("");
   const rows = a.specs
     .map(
       ([k, v], i) => `
@@ -616,24 +676,43 @@ function architectureMarkup() {
     .join("");
   return `
     <div class="section-inner section-inner--right">
-      <div class="block block--narrow" data-reveal>
-        <span class="section-tag">${a.tag}</span>
-        <h2 class="section-title">${lines(a.title)}</h2>
-        <p class="section-body">${a.intro}</p>
+      <div class="architecture-layout">
+        <div class="block block--narrow" data-reveal>
+          <span class="section-tag">${a.tag}</span>
+          <h2 class="section-title">${lines(a.title)}</h2>
+          <p class="section-body">${a.intro}</p>
+        </div>
+        <div class="architecture-groups">${groups}</div>
+        <details class="specs-disclosure" data-reveal>
+          <summary>Полная спецификация <span>07 узлов</span></summary>
+          <dl class="specs">${rows}</dl>
+        </details>
       </div>
-      <dl class="specs">${rows}</dl>
     </div>`;
 }
 
 function systemsMarkup() {
   const s = CONTENT.systems;
-  const cards = s.cards
+  const tabs = s.cards
     .map(
       (c, i) => `
-      <article class="card" data-reveal style="--i:${i}">
-        <span class="card-num">${c.number}</span>
-        <h3 class="card-name">${c.name}</h3>
-        <p class="card-desc">${c.desc}</p>
+      <button class="system-tab${i === 0 ? " is-active" : ""}" type="button" role="tab"
+        aria-selected="${i === 0 ? "true" : "false"}" data-system-tab="${i}">
+        <span>${c.number}</span>${c.name}
+      </button>`
+    )
+    .join("");
+  const panels = s.cards
+    .map(
+      (c, i) => `
+      <article class="system-panel${i === 0 ? " is-active" : ""}" role="tabpanel" data-system-panel="${i}">
+        <div class="system-panel__eyebrow">Узел ${c.number} · диагностика</div>
+        <h3>${c.name}</h3>
+        <p>${c.desc}</p>
+        <div class="system-response">
+          <span><small>Риск</small>${c.risk}</span>
+          <span><small>Ответ борта</small>${c.response}</span>
+        </div>
       </article>`
     )
     .join("");
@@ -644,7 +723,10 @@ function systemsMarkup() {
         <h2 class="section-title">${lines(s.title)}</h2>
         <p class="section-body">${s.intro}</p>
       </div>
-      <div class="cards">${cards}</div>
+      <div class="systems-console" data-reveal>
+        <div class="system-tabs" role="tablist" aria-label="Ключевые системы ровера">${tabs}</div>
+        <div class="system-panels">${panels}</div>
+      </div>
     </div>`;
 }
 
@@ -655,6 +737,7 @@ function logMarkup() {
       (e, i) => `
       <li class="log-entry" data-reveal style="--i:${i}">
         <span class="log-time">${e.time}</span>
+        <span class="log-code">${e.code}</span>
         <span class="log-text">${e.text}</span>
       </li>`
     )
@@ -682,11 +765,15 @@ function launchMarkup() {
           <span>${l.headlineLine2}</span>
         </h2>
         <p class="section-body launch-body">${l.body}</p>
-        <button class="cta-button" id="launch-button" type="button">
+        <div class="launch-actions">
+        <a class="cta-button" id="launch-button" href="${l.repository}" target="_blank" rel="noreferrer">
           <span class="cta-text">${l.button}</span>
           <span class="cta-arrow" aria-hidden="true">→</span>
           <span class="cta-scan" aria-hidden="true"></span>
-        </button>
+        </a>
+        <button class="replay-button" id="replay-button" type="button">${l.replay}</button>
+        </div>
+        <a class="source-link" href="${l.repository}" target="_blank" rel="noreferrer">${l.github}<span aria-hidden="true">↗</span></a>
         <div class="launch-footer">
           <span>${l.footerLine1}</span>
           <span>${l.footerLine2}</span>

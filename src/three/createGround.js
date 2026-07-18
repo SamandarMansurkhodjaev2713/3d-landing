@@ -1,8 +1,8 @@
 import * as THREE from "three";
 
 // Лунное окружение: рельефный грунт реголита (A) с микрофактурой (B) и валунами (C),
-// далёкий зубчатый край кратера Шеклтон + контактная тень. Под ровером поверхность
-// плоская (чтобы он стоял ровно), дальше — холмы и кратеры, уходящие в дымку-горизонт.
+// далёкий неровный горизонт + контактная тень. Под ровером поверхность плоская
+// (чтобы он стоял ровно), дальше — холмы и кратеры на фоне чёрного безвоздушного неба.
 
 // --- Детерминированный 2D value-noise (без Math.random в сцене) ---
 const frac = (n) => n - Math.floor(n);
@@ -30,9 +30,9 @@ const smooth = (e0, e1, x) => {
 // Направление ключевого света. ОБЯЗАНО совпадать с DirectionalLight в createLights.js
 // (источник статичен — панель сцены не меняет его положение). Нужен для направленной
 // контактной тени и для грейзинг-блеска реголита по линии терминатора.
-const SUN_POS = new THREE.Vector3(-8.0, 1.7, 3.2);
+const SUN_POS = new THREE.Vector3(-10.0, 0.24, 2.5);
 
-// Загрузчик PBR-текстур (CC0, Poly Haven: moon_meteor_01 — реальный лунный реголит).
+// Загрузчик PBR-текстур (CC0, ambientCG Ground091 — фотограмметрия мелкого гравия).
 const _texLoader = new THREE.TextureLoader();
 function loadTex(url, { srgb = false, repeat = 1 } = {}) {
   const t = _texLoader.load(url);
@@ -50,6 +50,17 @@ const CRATERS = [
   { x: 24, y: 64, r: 11, depth: 1.6 },
   { x: -30, y: -62, r: 18, depth: 2.6 }
 ];
+const MICRO_CRATERS = Array.from({ length: 28 }, (_, i) => {
+  const angle = hash(i * 1.91 + 8.0, 2.7) * Math.PI * 2;
+  const distance = 14 + Math.pow(hash(i * 3.17 + 4.0, 9.3), 0.72) * 142;
+  const radius = 2.8 + Math.pow(hash(i * 5.31 + 1.0, 5.8), 1.8) * 6.6;
+  return {
+    x: Math.cos(angle) * distance,
+    y: Math.sin(angle) * distance,
+    r: radius,
+    depth: radius * (0.085 + hash(i * 2.23, 8.1) * 0.055)
+  };
+});
 function craterProfile(d, r, depth) {
   if (d > r * 1.45) return 0;
   const t = d / r;
@@ -61,9 +72,10 @@ function craterProfile(d, r, depth) {
 function terrainHeight(lx, lz) {
   const r = Math.sqrt(lx * lx + lz * lz);
   const flat = smooth(7, 20, r); // плоско под ровером, рельеф дальше
-  let h = (fbm(lx * 0.012, lz * 0.012) - 0.5) * 3.0; // крупные холмы
-  h += (fbm(lx * 0.05, lz * 0.05) - 0.5) * 0.8; // средняя рябь
+  let h = (fbm(lx * 0.012, lz * 0.012) - 0.5) * 1.65;
+  h += (fbm(lx * 0.05, lz * 0.05) - 0.5) * 0.42;
   for (const c of CRATERS) h -= craterProfile(Math.hypot(lx - c.x, lz - c.y), c.r, c.depth);
+  for (const c of MICRO_CRATERS) h -= craterProfile(Math.hypot(lx - c.x, lz - c.y), c.r, c.depth);
   return h * flat;
 }
 
@@ -71,17 +83,17 @@ export function createGround(scene, y, radius) {
   const mobile = window.innerWidth <= 768;
 
   // --- A. Рельефная поверхность ---
-  const seg = mobile ? 120 : 180;
-  const geo = new THREE.PlaneGeometry(400, 400, seg, seg);
+  const seg = mobile ? 132 : 224;
+  const geo = new THREE.PlaneGeometry(500, 500, seg, seg);
   const pos = geo.attributes.position;
   for (let i = 0; i < pos.count; i++) {
     pos.setZ(i, terrainHeight(pos.getX(i), pos.getY(i)));
   }
   geo.computeVertexNormals();
 
-  // --- B. PBR-реголит из реальных фотограмметрических карт (Poly Haven moon_meteor_01) ---
-  const res = mobile ? "1k" : "2k";
-  const R = mobile ? 48 : 78; // тайлинг по плоскости 400×400 — мельче зерно у ровера
+  // --- B. Реголитная аппроксимация из фотограмметрических карт ambientCG Ground091 ---
+  const res = "1k";
+  const R = mobile ? 54 : 84;
   const gp = `${import.meta.env.BASE_URL}assets/textures/ground/`;
   const mat = new THREE.MeshStandardMaterial({
     color: 0xffffff,
@@ -92,8 +104,8 @@ export function createGround(scene, y, radius) {
     roughnessMap: loadTex(`${gp}rough_${res}.jpg`, { repeat: R }),
     aoMap: loadTex(`${gp}ao_${res}.jpg`, { repeat: R }) // затемнение в микро-углублениях
   });
-  mat.aoMapIntensity = 1.1;
-  mat.normalScale = new THREE.Vector2(1.9, 1.9); // выраженный микрорельеф под скользящим солнцем
+  mat.aoMapIntensity = 1.25;
+  mat.normalScale = new THREE.Vector2(1.28, 1.28);
 
   // Грейзинг-блеск реголита по терминатору (тёплый forward-scatter, view-независимый)
   // + макро-вариация яркости, которая убивает видимую сетку тайлинга. Без новых проходов.
@@ -108,7 +120,7 @@ export function createGround(scene, y, radius) {
 
   // --- Далёкий край кратера ---
   const rim = createCraterRim(y);
-  scene.add(rim);
+  rim.visible = false;
 
   // --- C. Разбросанные валуны ---
   const rocks = createRocks(y, mobile);
@@ -119,21 +131,40 @@ export function createGround(scene, y, radius) {
   // «cast»-плоскость убрали. Оставляем только тугую AO-впадину в стыке шасси с грунтом
   // (контактное затемнение, которое одна жёсткая направленная тень не воспроизводит).
   // На мобайле теней нет — там эта впадина работает и за лёгкую «посадку» аппарата.
+  const contact = new THREE.Group();
+  contact.position.y = y + 0.014;
+
   const ao = new THREE.Mesh(
-    new THREE.PlaneGeometry(radius * 1.7, radius * 1.2),
+    new THREE.PlaneGeometry(radius * 2.05, radius * 1.05),
     new THREE.MeshBasicMaterial({
       map: makeShadowTexture(0.9),
       transparent: true,
-      opacity: 0.55,
+      opacity: 0.42,
       depthWrite: false
     })
   );
   ao.rotation.x = -Math.PI / 2;
-  ao.position.set(0, y + 0.012, 0);
+  ao.rotation.z = Math.atan2(SUN_POS.z, SUN_POS.x);
+  ao.position.set(radius * 0.12, 0, 0);
   ao.renderOrder = -1;
-  scene.add(ao);
+  contact.add(ao);
 
-  return { ground, ao, rim, rocks };
+  const contactCore = new THREE.Mesh(
+    new THREE.PlaneGeometry(radius * 1.22, radius * 0.62),
+    new THREE.MeshBasicMaterial({
+      map: makeShadowTexture(0.96),
+      transparent: true,
+      opacity: 0.58,
+      depthWrite: false
+    })
+  );
+  contactCore.rotation.x = -Math.PI / 2;
+  contactCore.position.y = 0.002;
+  contactCore.renderOrder = 0;
+  contact.add(contactCore);
+  scene.add(contact);
+
+  return { ground, contact, ao, contactCore, rim, rocks };
 }
 
 // Шейдер грунта через onBeforeCompile (без новых проходов рендера):
@@ -145,8 +176,8 @@ function applyGroundShader(mat, macroScale) {
   macroTex.wrapS = macroTex.wrapT = THREE.RepeatWrapping;
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uSunDirW = { value: sunDirW };
-    shader.uniforms.uSheenColor = { value: new THREE.Color(0.92, 0.8, 0.62) };
-    shader.uniforms.uSheenStrength = { value: 0.16 };
+    shader.uniforms.uSheenColor = { value: new THREE.Color(0.74, 0.73, 0.69) };
+    shader.uniforms.uSheenStrength = { value: 0.055 };
     shader.uniforms.uMacroTex = { value: macroTex };
     shader.uniforms.uMacroScale = { value: macroScale };
     shader.vertexShader = shader.vertexShader
@@ -162,7 +193,7 @@ function applyGroundShader(mat, macroScale) {
       )
       .replace(
         "#include <map_fragment>",
-        "#include <map_fragment>\n{\n  float m = texture2D(uMacroTex, vMapUv * uMacroScale).r;\n  float m2 = texture2D(uMacroTex, vMapUv * uMacroScale * 0.37 + 0.5).r;\n  diffuseColor.rgb *= (0.58 + 0.6 * m) * (0.82 + 0.34 * m2);\n}"
+        "#include <map_fragment>\n{\n  float sourceLuma = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));\n  float compressed = mix(0.22, 0.46, smoothstep(0.04, 0.96, sourceLuma));\n  diffuseColor.rgb = mix(vec3(compressed), diffuseColor.rgb, 0.12);\n  float m = texture2D(uMacroTex, vMapUv * uMacroScale).r;\n  float m2 = texture2D(uMacroTex, vMapUv * uMacroScale * 0.37 + 0.5).r;\n  diffuseColor.rgb *= (0.84 + 0.26 * m) * (0.94 + 0.12 * m2);\n}"
       )
       .replace(
         "#include <emissivemap_fragment>",
@@ -170,12 +201,15 @@ function applyGroundShader(mat, macroScale) {
       );
   };
   // Стабильный ключ кэша программы — не плодим шейдеры.
-  mat.customProgramCacheKey = () => "ground-pbr-sheen-macro";
+  mat.customProgramCacheKey = () => "ground-pbr-sheen-macro-v2";
 }
 
 // Валуны: одна деформированная гео-форма, разбросанная InstancedMesh по рельефу.
 function createRocks(groundY, mobile) {
-  const base = new THREE.IcosahedronGeometry(1, 1);
+  // На десктопе detail=3 убирает заметную low-poly гранёность крупных камней.
+  // На мобильном сохраняем detail=2: форма остаётся читаемой, а fill-rate важнее
+  // субпиксельной геометрии дальних экземпляров.
+  const base = new THREE.IcosahedronGeometry(1, mobile ? 2 : 3);
   const bp = base.attributes.position;
   const v = new THREE.Vector3();
   for (let i = 0; i < bp.count; i++) {
@@ -190,7 +224,7 @@ function createRocks(groundY, mobile) {
   // PBR-камень (Poly Haven rock_boulder_dry, CC0) — выветренный серый валун.
   const rp = `${import.meta.env.BASE_URL}assets/textures/rock/`;
   const mat = new THREE.MeshStandardMaterial({
-    color: 0xb8b2a8,
+    color: 0x777a78,
     roughness: 1,
     metalness: 0,
     map: loadTex(`${rp}albedo_1k.jpg`, { srgb: true, repeat: 1.6 }),
@@ -209,12 +243,12 @@ function createRocks(groundY, mobile) {
 
   for (let i = 0; i < count; i++) {
     const ang = hash(i * 1.7, 3.1) * Math.PI * 2;
-    const rad = 4 + hash(i * 2.3, 7.7) * 32; // 4..36, не под ровером
+    const rad = 5.5 + hash(i * 2.3, 7.7) * 42;
     const wx = Math.cos(ang) * rad;
     const wz = Math.sin(ang) * rad;
     const h = terrainHeight(wx, -wz); // плоскость: lx=wx, lz=-wz
     // Размер: степенное распределение -> много мелкой гальки + редкие крупные валуны.
-    const sc = 0.05 + Math.pow(hash(i * 5.1, 1.3), 2.4) * 0.85;
+    const sc = 0.035 + Math.pow(hash(i * 5.1, 1.3), 2.8) * 0.54;
     p.set(wx, groundY + h + sc * 0.22, wz);
     e.set(hash(i, 9) * 0.5, hash(i, 4) * 6.28, hash(i, 2) * 0.5);
     q.setFromEuler(e);
@@ -245,7 +279,7 @@ function createCraterRim(groundY) {
     }
   }
   geo.computeVertexNormals();
-  const mat = new THREE.MeshStandardMaterial({ color: 0x14131a, roughness: 1, metalness: 0, side: THREE.DoubleSide });
+  const mat = new THREE.MeshStandardMaterial({ color: 0x1a1917, roughness: 1, metalness: 0, side: THREE.DoubleSide });
   const rim = new THREE.Mesh(geo, mat);
   rim.position.set(0, groundY + H / 2 - 23, 0);
   rim.renderOrder = -3;

@@ -2,19 +2,19 @@
 // всё остальное обесцвечено в лунный нейтрал. Один мотивированный «солнечный» свет
 // + холодный отражённый от грунта (earthshine). Никаких cyan/violet заливок.
 export const SCENE_DEFAULTS = {
-  exposure: 1.0,
+  exposure: 0.96,
 
   // Ключевой источник — «Солнце у горизонта», тёпло-розоватый (подобрано вручную).
-  sunIntensity: 4.1,
+  sunIntensity: 5.4,
   sunColorR: 255,
-  sunColorG: 190,
-  sunColorB: 197,
+  sunColorG: 246,
+  sunColorB: 232,
 
   // Отражённый свет от лунного грунта (hemisphere): холодный сверху, тёплый снизу.
   // Сдержанный fill ради лунной правды: один жёсткий источник, глубокие тени.
-  hemiIntensity: 1.2,
+  hemiIntensity: 0.28,
 
   // Окружение HDR — только для отражений, сдержанно.
-  hdrIntensity: 0.35,
+  hdrIntensity: 0.22,
   envRotation: 2.85
 };

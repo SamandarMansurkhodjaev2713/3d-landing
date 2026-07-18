@@ -1,13 +1,13 @@
 // Палитра проекта. Дублируется в CSS-переменных (src/styles/base.css).
 // Используется в JS там, где цвет нужен в коде (Three.js, canvas, динамика).
 export const THEME = {
-  black: "#050814",
-  white: "#EAF2FF",
-  accent: "#67D5FF",
-  accent2: "#9C8CFF",
-  gray: "#7B859F",
-  lightGray: "#111827",
-  panelBg: "rgba(5, 8, 20, 0.92)",
-  borderSoft: "rgba(234, 242, 255, 0.09)",
-  accentSoft: "rgba(103, 213, 255, 0.14)"
+  black: "#030303",
+  white: "#F1F0EB",
+  accent: "#D9B862",
+  instrument: "#A9D7E5",
+  gray: "#92918B",
+  lightGray: "#11110F",
+  panelBg: "rgba(4, 4, 4, 0.94)",
+  borderSoft: "rgba(241, 240, 235, 0.14)",
+  accentSoft: "rgba(217, 184, 98, 0.13)"
 };

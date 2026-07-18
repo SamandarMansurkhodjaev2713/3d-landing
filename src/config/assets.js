@@ -8,5 +8,9 @@ export const ASSETS = {
 
   hdr: {
     main: `${BASE}assets/hdr/rogland_clear_night_1k.hdr`
+  },
+
+  textures: {
+    earth: `${BASE}assets/textures/earth/blue-marble-1024.png`
   }
 };

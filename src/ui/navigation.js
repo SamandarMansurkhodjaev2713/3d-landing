@@ -7,11 +7,11 @@ export function createNavigation({ logoEl, linksEl, reducedMotion = false, onNav
 
   const links = [];
 
-  CONTENT.nav.links.forEach((item) => {
+  CONTENT.nav.links.forEach((item, index) => {
     const a = document.createElement("a");
     a.className = "nav-link" + (item.cta ? " nav-link--cta" : "");
     a.href = "#" + item.target;
-    a.textContent = item.label;
+    a.innerHTML = `<span class="nav-link__index">0${index + 1}</span><span class="nav-link__label">${item.label}</span>`;
     a.dataset.target = item.target;
 
     a.addEventListener("click", (e) => {

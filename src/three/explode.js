@@ -19,7 +19,8 @@ export function buildExplode(scene, model) {
   scene.add(root);
 
   // Грунт ставим точно под самую нижнюю точку аппарата — он касается поверхности.
-  createGround(scene, box.min.y - 0.02, radius);
+  const ground = createGround(scene, box.min.y - 0.02, radius);
+  root.attach(ground.contact);
 
   const meshes = [];
   model.traverse((o) => {
@@ -69,5 +70,5 @@ export function buildExplode(scene, model) {
     }
   }
 
-  return { root, explode: { setAmount, partCount: parts.length } };
+  return { root, explode: { setAmount, partCount: parts.length }, ground };
 }

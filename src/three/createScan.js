@@ -34,7 +34,7 @@ export function createScan({ groundY = -0.4, radius = 16, cycle = 5.5, color } =
   const uniforms = {
     uProgress: { value: 0 },
     uIntensity: { value: 0 },
-    uColor: { value: color ? color.clone() : new THREE.Color(0x67d5ff) }
+    uColor: { value: color ? color.clone() : new THREE.Color(0xa9d7e5) }
   };
 
   const mat = new THREE.ShaderMaterial({

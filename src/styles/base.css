@@ -1,18 +1,20 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Oswald:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Wix+Madefor+Display:wght@500;600;700;800&family=Wix+Madefor+Text:wght@400;500;600&display=swap");
 
 :root {
-  --black: #0A0A0C;
-  --white: #EAF2FF;
-  --accent: #67D5FF;
-  --accent-2: #9C8CFF;
-  --gray: #7B859F;
-  --light-gray: #111827;
-  --panel-bg: rgba(5, 8, 20, 0.92);
-  --border-soft: rgba(234, 242, 255, 0.09);
-  --accent-soft: rgba(103, 213, 255, 0.14);
+  --black: #030303;
+  --white: #F1F0EB;
+  --accent: #D9B862;
+  --accent-2: #8F8D86;
+  --instrument: #A9D7E5;
+  --gray: #92918B;
+  --light-gray: #11110F;
+  --panel-bg: rgba(4, 4, 4, 0.94);
+  --border-soft: rgba(241, 240, 235, 0.14);
+  --accent-soft: rgba(217, 184, 98, 0.13);
 
-  --font-head: 'Oswald', 'Inter', sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
+  --font-head: "Wix Madefor Display", "Arial Narrow", sans-serif;
+  --font-body: "Wix Madefor Text", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 
   --pad-x: clamp(20px, 5vw, 80px);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);

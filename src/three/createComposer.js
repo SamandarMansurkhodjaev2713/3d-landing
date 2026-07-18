@@ -52,9 +52,9 @@ export function createComposer(renderer, scene, camera) {
 
   const bloom = new UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
-    0.55, // strength — сдержанно
-    0.4, // radius
-    0.85 // threshold — только почти-белые пиксели (диск солнца, яркие кромки)
+    0.28,
+    0.2,
+    0.92
   );
   composer.addPass(bloom);
   composer.addPass(new OutputPass()); // tone mapping + sRGB

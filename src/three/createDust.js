@@ -17,18 +17,20 @@ const DUST_VERT = `
   varying float vA;
   void main() {
     vec3 p = position;
-    // Очень медленный дрейф каждой пылинки по своей фазе.
-    float t = uTime * 0.05;
-    p.x += sin(t + aPhase * 6.2831) * 0.6;
-    p.y += sin(t * 0.7 + aPhase * 4.0) * 0.25;
-    p.z += cos(t * 0.8 + aPhase * 5.0) * 0.6;
+    // В вакууме пыль не висит: короткий выброс идёт по баллистической дуге и падает.
+    float flight = fract(uTime * 0.12 + aPhase);
+    float arc = 4.0 * flight * (1.0 - flight);
+    float spread = flight * flight;
+    p.x += (aPhase - 0.5) * spread * 2.4;
+    p.y += arc * (0.28 + aPhase * 0.75);
+    p.z += (fract(aPhase * 7.13) - 0.5) * spread * 2.0;
 
     vec4 world = modelMatrix * vec4(p, 1.0);
     vec3 toCam = normalize(cameraPosition - world.xyz);
     // Forward-scatter: пылинка вспыхивает, когда смотрим СКВОЗЬ неё на солнце.
     float fs = pow(max(-dot(toCam, uSunDirW), 0.0), 3.0);
-    float tw = 0.6 + 0.4 * sin(uTime * 1.3 + aPhase * 6.2831);
-    vA = (0.18 + 0.82 * fs) * tw * uIntensity;
+    float life = smoothstep(0.0, 0.08, flight) * (1.0 - smoothstep(0.68, 1.0, flight));
+    vA = (0.12 + 0.88 * fs) * life * uIntensity;
 
     vec4 mv = viewMatrix * world;
     gl_PointSize = aSize * uPixelRatio * (300.0 / -mv.z);
@@ -51,7 +53,7 @@ const DUST_FRAG = `
 const frac = (n) => n - Math.floor(n);
 
 export function createDust({ isMobile = false, pixelRatio = 1, sunDir, count, area = 15, groundY = -0.4 } = {}) {
-  const n = count != null ? count : isMobile ? 90 : 240;
+  const n = count != null ? count : isMobile ? 28 : 72;
   const positions = new Float32Array(n * 3);
   const sizes = new Float32Array(n);
   const phases = new Float32Array(n);
@@ -62,9 +64,9 @@ export function createDust({ isMobile = false, pixelRatio = 1, sunDir, count, ar
     const uz = frac(Math.sin(i * 78.233) * 12543.123);
     const uy = frac(Math.sin(i * 3.17) * 9999.0);
     positions[i * 3 + 0] = (ux * 2 - 1) * area;
-    positions[i * 3 + 1] = groundY + 0.2 + uy * 3.0; // у самого грунта
+    positions[i * 3 + 1] = groundY + 0.03 + uy * 0.18;
     positions[i * 3 + 2] = (uz * 2 - 1) * area;
-    sizes[i] = 1.0 + frac(Math.sin(i * 5.71) * 1234.5) * 2.2;
+    sizes[i] = 0.7 + frac(Math.sin(i * 5.71) * 1234.5) * 1.6;
     phases[i] = frac(Math.sin(i * 1.37) * 555.5);
   }
 
@@ -76,9 +78,9 @@ export function createDust({ isMobile = false, pixelRatio = 1, sunDir, count, ar
   const uniforms = {
     uTime: { value: 0 },
     uPixelRatio: { value: pixelRatio },
-    uSunDirW: { value: sunDir ? sunDir.clone().normalize() : new THREE.Vector3(-8, 1.7, 3.2).normalize() },
+    uSunDirW: { value: sunDir ? sunDir.clone().normalize() : new THREE.Vector3(-10, 0.24, 2.5).normalize() },
     uIntensity: { value: 0 },
-    uColor: { value: new THREE.Color(0.95, 0.86, 0.72) }
+    uColor: { value: new THREE.Color(0.76, 0.74, 0.69) }
   };
 
   const mat = new THREE.ShaderMaterial({
