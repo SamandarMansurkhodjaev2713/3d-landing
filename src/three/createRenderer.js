@@ -4,7 +4,13 @@ import { SCENE_DEFAULTS } from "../config/scenePresets.js";
 // Потолок pixelRatio. Модель тяжёлая (~420k треугольников), поэтому на телефонах
 // (высокий DPR) рендерим скромнее — это главный рычаг плавности без потери чёткости.
 export function pixelRatioCap() {
-  return window.innerWidth <= 768 ? 1.1 : 1.35;
+  const compactLandscape = window.innerWidth <= 900 && window.innerHeight <= 520;
+  if (window.innerWidth > 768 && !compactLandscape) return 1.35;
+  const memory = navigator.deviceMemory || 8;
+  const cores = navigator.hardwareConcurrency || 8;
+  const constrained = memory <= 4 || cores <= 4;
+  if (constrained) return 0.92;
+  return window.innerWidth <= 420 ? 1.02 : 1.1;
 }
 
 // WebGL-рендерер: alpha-фон (тёмный backdrop делает CSS), ACES tone mapping,
@@ -29,7 +35,8 @@ export function createRenderer(canvas) {
   // Реальные тени от низкого солнца — только на десктопе (на телефонах лишний
   // проход в карту теней от 400+ мешей ровера бил бы по плавности). PCFSoft — мягкая
   // полутень, дёшево, не конфликтует с logarithmicDepthBuffer.
-  if (window.innerWidth > 768) {
+  const compactLandscape = window.innerWidth <= 900 && window.innerHeight <= 520;
+  if (window.innerWidth > 768 && !compactLandscape) {
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   }

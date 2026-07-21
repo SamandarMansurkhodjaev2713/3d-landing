@@ -46,7 +46,8 @@ import { createSectionDirector } from "./ui/sectionDirector.js";
 
 const el = (id) => document.getElementById(id);
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-const isMobile = window.matchMedia("(max-width: 768px)").matches;
+const isCompactLandscape = window.matchMedia("(max-width: 900px) and (max-height: 520px)").matches;
+const isMobile = window.matchMedia("(max-width: 768px)").matches || isCompactLandscape;
 
 // --- Видимый отказ загрузки ---
 // Раньше сбой сети/загрузки тихо «глотался» в .catch(), и сайт молча уезжал в
@@ -115,7 +116,7 @@ function boot() {
 
   // Состояние курсора для параллакса (нормализованное -1..1, со сглаживанием).
   const mouse = { tx: 0, ty: 0, x: 0, y: 0 };
-  if (!reducedMotion) {
+  if (!reducedMotion && !isMobile) {
     window.addEventListener("pointermove", (e) => {
       mouse.tx = (e.clientX / window.innerWidth) * 2 - 1;
       mouse.ty = (e.clientY / window.innerHeight) * 2 - 1;
@@ -125,6 +126,12 @@ function boot() {
   // Рабочая копия ракурсов (для портрета — свои). Её правит панель камеры, читает rig.
   const kfSource = isMobile ? CAMERA_KEYFRAMES_MOBILE : CAMERA_KEYFRAMES;
   const keyframes = kfSource.map((k) => ({ ...k }));
+  if (isCompactLandscape) {
+    // В landscape интерфейс занимает обе боковые зоны, поэтому ровер смещаем
+    // в свободный инженерный просвет между заголовком и диагностической панелью.
+    keyframes[3].x = -1.8;
+    keyframes[3].z = -0.2;
+  }
   const sections = SECTION_IDS.map((id) => el(id));
   const rig = createCameraRig({
     camera,
@@ -148,12 +155,12 @@ function boot() {
   const mobileMenu = createMobileMenu({ navEl: el("main-nav"), toggleBtn: el("nav-toggle") });
   const progressBar = createProgressBar(el("progress-bar"));
   const activeSection = createActiveSection(nav.links);
-  const hud = createHud(el("hud-layer"));
+  const hud = isMobile ? { update() {} } : createHud(el("hud-layer"));
   const sectionDirector = createSectionDirector({ reducedMotion });
   initReveal();
   initCountUp({ reducedMotion });
   initMagneticButton(el("launch-button"), { reducedMotion });
-  initCursor({ reducedMotion });
+  if (!isMobile) initCursor({ reducedMotion });
 
   const replayBtn = el("replay-button");
   if (replayBtn) {
@@ -400,7 +407,7 @@ function boot() {
     }
     rig.update(dt);
     const sf = rig.state.sectionFloat;
-    sectionDirector.update(sf);
+    const systemsState = sectionDirector.update();
     const missionDust = Math.max(0, 1 - Math.abs(sf - 1.08) / 0.34);
     dust.setIntensity(missionDust * 0.24);
     const terrainPulse = Math.max(0, 1 - Math.abs(sf - 1.45) / 0.52);
@@ -410,9 +417,14 @@ function boot() {
       const inspectionProgress = Math.max(0, Math.min(1, (sf - 1.62) / 0.76));
       reconstructionCtl.setInspection(inspectionProgress, inspection * 0.52);
     }
-    // Разборка ровера по скроллу: раскрывается к секции «Системы» (3) и собирается обратно.
+    // Диагностический разрез: плавно раскрывается внутри главы «Системы», удерживает
+    // читаемый силуэт во время четырёх состояний и собирается до выхода в журнал.
     if (explodeCtl) {
-      explodeCtl.setAmount(Math.max(0, 1 - Math.abs(sf - 3) / 1.3));
+      const open = smooth01(0.02, 0.18, systemsState.progress);
+      const close = 1 - smooth01(0.82, 0.98, systemsState.progress);
+      const amount = systemsState.inView ? Math.min(open, close) * (reducedMotion ? 0.38 : 0.88) : 0;
+      explodeCtl.setState(amount, systemsState.active);
+      explodeCtl.update(dt);
     }
     // Инерция: скорость скролла даёт лёгкий velocity-дрейф звёзд/пыли (вес сцены),
     // сглаженный, чтобы не дёргался. Для reduced-motion отключаем.
@@ -446,7 +458,8 @@ function boot() {
       const fps = fpsN / fpsT;
       fpsT = 0;
       fpsN = 0;
-      if (fps < 45 && qualityStep < 2) {
+      const fpsFloor = isMobile ? 42 : 45;
+      if (fps < fpsFloor && qualityStep < 2) {
         qualityStep++;
         if (qualityStep === 1) {
           lowQuality = true; // шаг 1: выключаем bloom
@@ -697,18 +710,23 @@ function systemsMarkup() {
     .map(
       (c, i) => `
       <button class="system-tab${i === 0 ? " is-active" : ""}" type="button" role="tab"
+        id="system-tab-${i}" aria-controls="system-panel-${i}"
         aria-selected="${i === 0 ? "true" : "false"}" data-system-tab="${i}">
-        <span>${c.number}</span>${c.name}
+        <span class="system-tab__number">${c.number}</span>
+        <span class="system-tab__name">${c.code}</span>
       </button>`
     )
     .join("");
   const panels = s.cards
     .map(
       (c, i) => `
-      <article class="system-panel${i === 0 ? " is-active" : ""}" role="tabpanel" data-system-panel="${i}">
-        <div class="system-panel__eyebrow">Узел ${c.number} · диагностика</div>
-        <h3>${c.name}</h3>
-        <p>${c.desc}</p>
+      <article class="system-panel${i === 0 ? " is-active" : ""}" role="tabpanel"
+        id="system-panel-${i}" aria-labelledby="system-tab-${i}" data-system-panel="${i}">
+        <div class="system-panel__copy">
+          <div class="system-panel__eyebrow">Контур ${c.number} · ${c.code}</div>
+          <h3>${c.name}</h3>
+          <p>${c.desc}</p>
+        </div>
         <div class="system-response">
           <span><small>Риск</small>${c.risk}</span>
           <span><small>Ответ борта</small>${c.response}</span>
@@ -717,11 +735,20 @@ function systemsMarkup() {
     )
     .join("");
   return `
-    <div class="section-inner section-inner--bottom">
-      <div class="block-head" data-reveal>
-        <span class="section-tag">${s.tag}</span>
-        <h2 class="section-title">${lines(s.title)}</h2>
-        <p class="section-body">${s.intro}</p>
+    <div class="section-inner systems-stage">
+      <div class="systems-heading" data-reveal>
+        <div class="block-head">
+          <span class="section-tag">${s.tag}</span>
+          <h2 class="section-title">${lines(s.title)}</h2>
+          <p class="section-body">${s.intro}</p>
+        </div>
+      </div>
+      <div class="systems-cutaway" aria-hidden="true">
+        <span class="systems-cutaway__label">Технический разрез · П-6</span>
+        <span class="systems-cutaway__axis systems-cutaway__axis--x"></span>
+        <span class="systems-cutaway__axis systems-cutaway__axis--y"></span>
+        <span class="systems-cutaway__center"></span>
+        <span class="systems-cutaway__counter" data-system-counter>01 / 04</span>
       </div>
       <div class="systems-console" data-reveal>
         <div class="system-tabs" role="tablist" aria-label="Ключевые системы ровера">${tabs}</div>

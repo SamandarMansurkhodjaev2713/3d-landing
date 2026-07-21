@@ -80,10 +80,11 @@ function terrainHeight(lx, lz) {
 }
 
 export function createGround(scene, y, radius) {
-  const mobile = window.innerWidth <= 768;
+  const mobile = window.innerWidth <= 768 || (window.innerWidth <= 900 && window.innerHeight <= 520);
+  const constrained = mobile && ((navigator.deviceMemory || 8) <= 4 || (navigator.hardwareConcurrency || 8) <= 4);
 
   // --- A. Рельефная поверхность ---
-  const seg = mobile ? 132 : 224;
+  const seg = constrained ? 104 : mobile ? 132 : 224;
   const geo = new THREE.PlaneGeometry(500, 500, seg, seg);
   const pos = geo.attributes.position;
   for (let i = 0; i < pos.count; i++) {
@@ -123,7 +124,7 @@ export function createGround(scene, y, radius) {
   rim.visible = false;
 
   // --- C. Разбросанные валуны ---
-  const rocks = createRocks(y, mobile);
+  const rocks = createRocks(y, mobile, constrained);
   scene.add(rocks);
 
   // --- Контактный AO под шасси ---
@@ -205,7 +206,7 @@ function applyGroundShader(mat, macroScale) {
 }
 
 // Валуны: одна деформированная гео-форма, разбросанная InstancedMesh по рельефу.
-function createRocks(groundY, mobile) {
+function createRocks(groundY, mobile, constrained = false) {
   // На десктопе detail=3 убирает заметную low-poly гранёность крупных камней.
   // На мобильном сохраняем detail=2: форма остаётся читаемой, а fill-rate важнее
   // субпиксельной геометрии дальних экземпляров.
@@ -231,7 +232,7 @@ function createRocks(groundY, mobile) {
     normalMap: loadTex(`${rp}normal_1k.jpg`, { repeat: 1.6 }),
     roughnessMap: loadTex(`${rp}rough_1k.jpg`, { repeat: 1.6 })
   });
-  const count = mobile ? 44 : 84;
+  const count = constrained ? 28 : mobile ? 44 : 84;
   const inst = new THREE.InstancedMesh(base, mat, count);
   inst.castShadow = true;
   inst.receiveShadow = true;

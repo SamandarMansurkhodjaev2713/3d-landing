@@ -51,7 +51,8 @@ export function createSky({ isMobile = false, pixelRatio = 1 } = {}) {
     uPixelRatio: { value: pixelRatio }
   };
 
-  const stars = buildStars(isMobile ? 900 : 1900, 112, uniforms, {
+  const constrained = isMobile && ((navigator.deviceMemory || 8) <= 4 || (navigator.hardwareConcurrency || 8) <= 4);
+  const stars = buildStars(constrained ? 560 : isMobile ? 900 : 1900, 112, uniforms, {
     band: false,
     alpha: 0.86,
     sizeMin: 0.55,
@@ -59,7 +60,7 @@ export function createSky({ isMobile = false, pixelRatio = 1 } = {}) {
   });
   celestial.add(stars);
 
-  const milkyWay = buildStars(isMobile ? 650 : 1500, 111, uniforms, {
+  const milkyWay = buildStars(constrained ? 320 : isMobile ? 650 : 1500, 111, uniforms, {
     band: true,
     alpha: 0.26,
     sizeMin: 0.38,

@@ -18,7 +18,7 @@ export function createLights(scene) {
   // Реальные тени (рендерятся только если renderer.shadowMap.enabled — десктоп).
   // Ортокамера тени покрывает «геройскую» зону у ровера (не всю плоскость 400×400,
   // иначе тексели огромные и тень мыльная). target по умолчанию в (0,0,0) — у ровера.
-  const mobile = window.innerWidth <= 768;
+  const mobile = window.innerWidth <= 768 || (window.innerWidth <= 900 && window.innerHeight <= 520);
   sun.castShadow = true;
   sun.shadow.mapSize.set(mobile ? 1024 : 2048, mobile ? 1024 : 2048);
   const sc = sun.shadow.camera;
